@@ -93,6 +93,18 @@
     </div>
 
     <div class="admin-box" style="margin-top: 20px;">
+        <h2>👥 Registered Users List</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Username</th><th>UID</th><th>Balance</th></tr>
+                </thead>
+                <tbody id="fullUserList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="admin-box" style="margin-top: 20px;">
         <h2>💳 Withdrawal Management</h2>
         <div class="table-wrap">
             <table>
@@ -122,15 +134,26 @@
     const db = firebase.database();
 
     function loadAdminData() {
-        // Users Stats
+        // ১. ইউজার স্ট্যাটাস এবং লিস্ট লোড
         db.ref('users').on('value', s => {
             document.getElementById('statUsers').innerText = s.numChildren();
             let totalBal = 0;
-            s.forEach(u => totalBal += (u.val().balance || 0));
+            const userTable = document.getElementById('fullUserList');
+            userTable.innerHTML = "";
+            
+            s.forEach(child => {
+                const u = child.val();
+                totalBal += (u.balance || 0);
+                userTable.innerHTML += `<tr>
+                    <td>${u.username || u.name || 'No Name'}</td>
+                    <td style="font-size:10px; color:#888;">${child.key}</td>
+                    <td>${u.balance || 0} 🟡</td>
+                </tr>`;
+            });
             document.getElementById('statBalance').innerText = totalBal + " 🟡";
         });
 
-        // Offers List in Admin
+        // ২. অফার লিস্ট লোড
         db.ref('cpaOffers').on('value', s => {
             const list = document.getElementById('adminOfferList');
             list.innerHTML = "";
@@ -144,7 +167,7 @@
             });
         });
 
-        // Withdrawals
+        // ৩. উইথড্র লিস্ট লোড
         db.ref('withdrawRequests').on('value', s => {
             let pending = 0, paid = 0;
             const list = document.getElementById('withdrawList');
@@ -162,6 +185,8 @@
             document.getElementById('statPaid').innerText = paid + " 🟡";
         });
     }
+    
+    // পেজ লোড হওয়ার সাথে সাথে ডাটা কল করা
     loadAdminData();
 
     document.getElementById('noticeTarget').onchange = function(){
