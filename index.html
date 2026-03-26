@@ -36,6 +36,7 @@
         th { text-align: left; font-size: 12px; color: #555; padding: 15px; border-bottom: 1px solid #333; }
         td { padding: 15px; font-size: 13px; border-bottom: 1px solid #222; }
         .badge { padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; background: rgba(255,123,0,0.2); color: var(--primary); }
+        .mini-img { width: 30px; height: 30px; border-radius: 5px; object-fit: cover; }
     </style>
 </head>
 <body>
@@ -59,9 +60,16 @@
             <div class="form-group"><label>Offer Title</label><input type="text" id="offTitle" placeholder="Ex: Win Nike Gift Card"></div>
             <div class="form-group"><label>CPA Link</label><input type="text" id="offLink" placeholder="https://your-cpa-link.com"></div>
             <div class="form-group"><label>Reward Coins</label><input type="number" id="offReward" placeholder="Ex: 500"></div>
-            <div class="form-group"><label>Icon (Emoji)</label><input type="text" id="offIcon" placeholder="Ex: 👟 or 💰"></div>
+            <div class="form-group"><label>Offer Image URL (Direct Link)</label><input type="text" id="offIcon" placeholder="https://example.com/logo.png"></div>
             <button class="btn btn-primary" onclick="pushOffer()">ADD TO INBOX-TASK</button>
-            <button class="btn btn-danger" onclick="clearOffers()" style="margin-top: 10px;">CLEAR ALL OFFERS</button>
+            
+            <h3 style="font-size: 13px; margin-top: 25px; color: #888;">Active Offers List</h3>
+            <div class="table-wrap">
+                <table style="min-width: 100%;">
+                    <thead><tr><th>Image</th><th>Title</th><th>Action</th></tr></thead>
+                    <tbody id="adminOfferList"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="admin-box">
@@ -113,14 +121,30 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Stats & Data Loaders
     function loadAdminData() {
+        // Users Stats
         db.ref('users').on('value', s => {
             document.getElementById('statUsers').innerText = s.numChildren();
             let totalBal = 0;
             s.forEach(u => totalBal += (u.val().balance || 0));
             document.getElementById('statBalance').innerText = totalBal + " 🟡";
         });
+
+        // Offers List in Admin
+        db.ref('cpaOffers').on('value', s => {
+            const list = document.getElementById('adminOfferList');
+            list.innerHTML = "";
+            s.forEach(child => {
+                const off = child.val();
+                list.innerHTML += `<tr>
+                    <td><img src="${off.icon || 'https://via.placeholder.com/50'}" class="mini-img"></td>
+                    <td style="font-size:11px;">${off.title}</td>
+                    <td><button onclick="deleteOffer('${child.key}')" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold;">Del</button></td>
+                </tr>`;
+            });
+        });
+
+        // Withdrawals
         db.ref('withdrawRequests').on('value', s => {
             let pending = 0, paid = 0;
             const list = document.getElementById('withdrawList');
@@ -144,18 +168,24 @@
         document.getElementById('specUidBox').style.display = this.value === 'specific' ? 'block' : 'none';
     };
 
-    // 1. CPA Offer Function
     function pushOffer() {
         const title = document.getElementById('offTitle').value;
         const link = document.getElementById('offLink').value;
         const reward = document.getElementById('offReward').value;
-        const icon = document.getElementById('offIcon').value || "🎁";
-        if(!title || !link) return alert("Fill all data!");
-        db.ref('cpaOffers').push({ title, link, reward, icon }).then(() => alert("Offer Added to App! 🔥"));
+        const icon = document.getElementById('offIcon').value;
+        if(!title || !link || !icon) return alert("All fields (including Image URL) are required!");
+        db.ref('cpaOffers').push({ title, link, reward, icon }).then(() => {
+            alert("Offer Added!");
+            document.getElementById('offTitle').value = "";
+            document.getElementById('offLink').value = "";
+            document.getElementById('offIcon').value = "";
+        });
     }
-    function clearOffers() { if(confirm("Clear all?")) db.ref('cpaOffers').remove(); }
 
-    // 2. Notice Functions
+    function deleteOffer(key) {
+        if(confirm("Delete this offer?")) db.ref('cpaOffers/' + key).remove();
+    }
+
     function updateScroll() {
         const text = document.getElementById('scrollInput').value;
         const target = document.getElementById('noticeTarget').value;
@@ -169,7 +199,6 @@
     }
     function closePopup() { db.ref('appSettings/popupNotice/show').set(false).then(() => alert("Popup Stopped!")); }
 
-    // 3. Withdraw Management
     function approveW(key) {
         if(confirm("Mark as Paid?")) {
             db.ref('withdrawRequests/' + key).update({ status: "Paid" }).then(() => alert("Approved!"));
