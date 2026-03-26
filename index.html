@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox Dollar - Master Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF7B00; --success: #00E676; --danger: #FF5252;
+            --dark-bg: #050505; --card-bg: #121212; --input-bg: #1A1A1A; --text: #FFFFFF;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--dark-bg); color: var(--text); margin: 0; padding: 10px; }
+        .container { max-width: 1100px; margin: auto; padding-bottom: 50px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid #333; margin-bottom: 20px; }
+        .admin-header h1 { font-size: 20px; color: var(--primary); margin: 0; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+        .stat-card { background: var(--card-bg); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid #222; }
+        .stat-card h3 { font-size: 10px; color: #888; text-transform: uppercase; margin: 0; }
+        .stat-card p { font-size: 20px; font-weight: 700; margin: 5px 0 0; color: var(--primary); }
+        .grid-layout { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media (min-width: 992px) { .grid-layout { grid-template-columns: 1fr 1fr; } }
+        .admin-box { background: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid #222; margin-bottom: 15px; }
+        .admin-box h2 { font-size: 16px; margin-bottom: 15px; color: var(--primary); border-left: 3px solid var(--primary); padding-left: 10px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #333; border-radius: 10px; color: white; outline: none; font-size: 14px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 5px; }
+        .btn-primary { background: var(--primary); color: black; }
+        .btn-success { background: var(--success); color: black; }
+        .btn-danger { background: var(--danger); color: white; }
+        .table-wrap { width: 100%; overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid #222; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { text-align: left; font-size: 12px; color: #555; padding: 15px; border-bottom: 1px solid #333; }
+        td { padding: 15px; font-size: 13px; border-bottom: 1px solid #222; }
+        .badge { padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; background: rgba(255,123,0,0.2); color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="admin-header">
+        <h1>MASTER CONTROL ⚡</h1>
+        <div style="font-size: 11px; color: #888; background: #1a1a1a; padding: 5px 12px; border-radius: 20px;">Admin: Prachi Barmon</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><h3>Total Users</h3><p id="statUsers">0</p></div>
+        <div class="stat-card"><h3>Pending Withdraw</h3><p id="statPending">0</p></div>
+        <div class="stat-card"><h3>Total Paid</h3><p id="statPaid">0</p></div>
+        <div class="stat-card"><h3>System Balance</h3><p id="statBalance">0</p></div>
+    </div>
+
+    <div class="grid-layout">
+        <div class="admin-box">
+            <h2>📢 CPA Offer Controller</h2>
+            <div class="form-group"><label>Offer Title</label><input type="text" id="offTitle" placeholder="Ex: Win Nike Gift Card"></div>
+            <div class="form-group"><label>CPA Link</label><input type="text" id="offLink" placeholder="https://your-cpa-link.com"></div>
+            <div class="form-group"><label>Reward Coins</label><input type="number" id="offReward" placeholder="Ex: 500"></div>
+            <div class="form-group"><label>Icon (Emoji)</label><input type="text" id="offIcon" placeholder="Ex: 👟 or 💰"></div>
+            <button class="btn btn-primary" onclick="pushOffer()">ADD TO INBOX-TASK</button>
+            <button class="btn btn-danger" onclick="clearOffers()" style="margin-top: 10px;">CLEAR ALL OFFERS</button>
+        </div>
+
+        <div class="admin-box">
+            <h2>✉️ Notice Center</h2>
+            <div class="form-group">
+                <label>Target Audience</label>
+                <select id="noticeTarget">
+                    <option value="global">All Users (Global)</option>
+                    <option value="specific">Specific User (By UID)</option>
+                </select>
+            </div>
+            <div id="specUidBox" class="form-group" style="display:none;"><label>User UID</label><input type="text" id="targetUid" placeholder="Enter User UID"></div>
+            
+            <div class="form-group"><label>Scrolling News (Newsticker)</label><input type="text" id="scrollInput" placeholder="নিউজ বার নোটিশ..."></div>
+            <button class="btn btn-primary" onclick="updateScroll()">UPDATE SCROLL</button>
+
+            <div class="form-group" style="margin-top:15px;"><label>Popup/Alert Message</label><textarea id="popupInput" rows="2" placeholder="পপ-আপ মেসেজ..."></textarea></div>
+            <button class="btn btn-success" onclick="sendPopup()">SEND POPUP</button>
+            <button class="btn btn-danger" onclick="closePopup()">STOP/CLOSE POPUP</button>
+        </div>
+    </div>
+
+    <div class="admin-box" style="margin-top: 20px;">
+        <h2>💳 Withdrawal Management</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Method</th><th>Account</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody id="withdrawList"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCqI9Te8ffBptsDS-oAIwPjpa5YSSpygYg",
+        authDomain: "micro-job-center.firebaseapp.com",
+        databaseURL: "https://micro-job-center-default-rtdb.firebaseio.com",
+        projectId: "micro-job-center",
+        storageBucket: "micro-job-center.firebasestorage.app",
+        messagingSenderId: "146985711984",
+        appId: "1:146985711984:web:fcb79dd1e82f0f4972b7b5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Stats & Data Loaders
+    function loadAdminData() {
+        db.ref('users').on('value', s => {
+            document.getElementById('statUsers').innerText = s.numChildren();
+            let totalBal = 0;
+            s.forEach(u => totalBal += (u.val().balance || 0));
+            document.getElementById('statBalance').innerText = totalBal + " 🟡";
+        });
+        db.ref('withdrawRequests').on('value', s => {
+            let pending = 0, paid = 0;
+            const list = document.getElementById('withdrawList');
+            list.innerHTML = "";
+            s.forEach(child => {
+                const r = child.val();
+                if(r.status === "Pending") pending++; else paid += parseInt(r.amount);
+                list.innerHTML += `<tr>
+                    <td>${r.name}</td><td>${r.method}</td><td>${r.account}</td><td>${r.amount}</td>
+                    <td><span class="badge">${r.status}</span></td>
+                    <td>${r.status === 'Pending' ? `<button class="btn-success" onclick="approveW('${child.key}')" style="padding:5px 10px; border-radius:5px; border:none; cursor:pointer;">Approve</button>` : '✅'}</td>
+                </tr>`;
+            });
+            document.getElementById('statPending').innerText = pending;
+            document.getElementById('statPaid').innerText = paid + " 🟡";
+        });
+    }
+    loadAdminData();
+
+    document.getElementById('noticeTarget').onchange = function(){
+        document.getElementById('specUidBox').style.display = this.value === 'specific' ? 'block' : 'none';
+    };
+
+    // 1. CPA Offer Function
+    function pushOffer() {
+        const title = document.getElementById('offTitle').value;
+        const link = document.getElementById('offLink').value;
+        const reward = document.getElementById('offReward').value;
+        const icon = document.getElementById('offIcon').value || "🎁";
+        if(!title || !link) return alert("Fill all data!");
+        db.ref('cpaOffers').push({ title, link, reward, icon }).then(() => alert("Offer Added to App! 🔥"));
+    }
+    function clearOffers() { if(confirm("Clear all?")) db.ref('cpaOffers').remove(); }
+
+    // 2. Notice Functions
+    function updateScroll() {
+        const text = document.getElementById('scrollInput').value;
+        const target = document.getElementById('noticeTarget').value;
+        const path = target === 'global' ? 'appSettings/scrollNotice' : `users/${document.getElementById('targetUid').value}/personalNotice`;
+        db.ref(path).set(text).then(() => alert("Notice Updated!"));
+    }
+
+    function sendPopup() {
+        const text = document.getElementById('popupInput').value;
+        db.ref('appSettings/popupNotice').set({ text, show: true }).then(() => alert("Popup Sent!"));
+    }
+    function closePopup() { db.ref('appSettings/popupNotice/show').set(false).then(() => alert("Popup Stopped!")); }
+
+    // 3. Withdraw Management
+    function approveW(key) {
+        if(confirm("Mark as Paid?")) {
+            db.ref('withdrawRequests/' + key).update({ status: "Paid" }).then(() => alert("Approved!"));
+        }
+    }
+</script>
+</body>
+</html>
