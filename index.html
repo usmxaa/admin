@@ -117,118 +117,161 @@
     </div>
 </div>
 
+
+    <script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCqI9Te8ffBptsDS-oAIwPjpa5YSSpygYg",
-        authDomain: "micro-job-center.firebaseapp.com",
-        databaseURL: "https://micro-job-center-default-rtdb.firebaseio.com",
-        projectId: "micro-job-center",
-        storageBucket: "micro-job-center.firebasestorage.app",
-        messagingSenderId: "146985711984",
-        appId: "1:146985711984:web:fcb79dd1e82f0f4972b7b5"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyCqI9Te8ffBptsDS-oAIwPjpa5YSSpygYg",
+    authDomain: "micro-job-center.firebaseapp.com",
+    databaseURL: "https://micro-job-center-default-rtdb.firebaseio.com",
+    projectId: "micro-job-center",
+    storageBucket: "micro-job-center.firebasestorage.app",
+    messagingSenderId: "146985711984",
+    appId: "1:146985711984:web:fcb79dd1e82f0f4972b7b5"
+};
 
-    function loadAdminData() {
-        // ১. ইউজার স্ট্যাটাস এবং লিস্ট লোড
-        db.ref('users').on('value', s => {
-            document.getElementById('statUsers').innerText = s.numChildren();
-            let totalBal = 0;
-            const userTable = document.getElementById('fullUserList');
-            userTable.innerHTML = "";
-            
-            s.forEach(child => {
-                const u = child.val();
-                totalBal += (u.balance || 0);
-                userTable.innerHTML += `<tr>
-                    <td>${u.username || u.name || 'No Name'}</td>
-                    <td style="font-size:10px; color:#888;">${child.key}</td>
-                    <td>${u.balance || 0} 🟡</td>
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// --- ১. পেজ লোড হলে সব ডাটা কানেক্ট করা ---
+window.onload = function() {
+    loadDashboardStats();
+    loadUsersList();
+    loadWithdrawRequests();
+    loadAppSettings(); // নোটিশ এবং অফার লোড
+};
+
+// --- ২. ড্যাশবোর্ড স্ট্যাটাস এবং ইউজার লিস্ট কন্ট্রোল ---
+function loadUsersList() {
+    db.ref('users').on('value', (snapshot) => {
+        const userTable = document.getElementById('fullUserList');
+        let userHTML = "";
+        let totalCoins = 0;
+
+        snapshot.forEach(child => {
+            const u = child.val();
+            const uid = child.key;
+            totalCoins += (u.balance || 0);
+            const isBlocked = u.isBlocked || false;
+
+            userHTML += `
+                <tr style="border-bottom: 1px solid #222;">
+                    <td style="padding:12px;">
+                        <b style="color:#fff;">${u.username || 'No Name'}</b><br>
+                        <small style="color:#666;">${u.email || 'No Email'}</small>
+                    </td>
+                    <td>
+                        <input type="number" id="bal_${uid}" value="${u.balance || 0}" 
+                               style="width:70px; background:#000; color:#FF7B00; border:1px solid #333; padding:5px; border-radius:5px;">
+                        <button onclick="updateBalance('${uid}')" style="background:#FF7B00; border:none; padding:5px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:10px;">SAVE</button>
+                    </td>
+                    <td>
+                        <button onclick="toggleBlock('${uid}', ${isBlocked})" 
+                                style="background:${isBlocked ? '#28a745' : '#dc3545'}; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer;">
+                                ${isBlocked ? 'Unblock' : 'Block'}</button>
+                        <button onclick="deleteUser('${uid}')" 
+                                style="background:#444; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; margin-left:5px;">DEL</button>
+                    </td>
                 </tr>`;
-            });
-            document.getElementById('statBalance').innerText = totalBal + " 🟡";
         });
+        userTable.innerHTML = userHTML;
+        document.getElementById('statUsers').innerText = snapshot.numChildren();
+        document.getElementById('statBalance').innerText = totalCoins + " 🟡";
+    });
+}
 
-        // ২. অফার লিস্ট লোড
-        db.ref('cpaOffers').on('value', s => {
-            const list = document.getElementById('adminOfferList');
-            list.innerHTML = "";
-            s.forEach(child => {
-                const off = child.val();
-                list.innerHTML += `<tr>
-                    <td><img src="${off.icon || 'https://via.placeholder.com/50'}" class="mini-img"></td>
-                    <td style="font-size:11px;">${off.title}</td>
-                    <td><button onclick="deleteOffer('${child.key}')" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold;">Del</button></td>
-                </tr>`;
-            });
+// --- ৩. উইথড্রয়াল ম্যানেজমেন্ট (Approve/Reject) ---
+function loadWithdrawRequests() {
+    db.ref('withdrawRequests').on('value', (snapshot) => {
+        const withdrawTable = document.getElementById('withdrawTable');
+        let withdrawHTML = "";
+
+        snapshot.forEach(child => {
+            const r = child.val();
+            const rid = child.key;
+
+            if (r.status === "Pending") {
+                withdrawHTML += `
+                    <tr style="background: rgba(255,123,0,0.05); border-bottom: 1px solid #333;">
+                        <td style="padding:12px;">${r.name}<br><small>${r.method}</small></td>
+                        <td>${r.amount} 🟡<br><small>${r.account}</small></td>
+                        <td>
+                            <button onclick="approveWithdraw('${rid}')" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer;">PAID</button>
+                            <button onclick="rejectWithdraw('${rid}', '${r.uid}', ${r.amount})" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; margin-left:3px;">REJECT</button>
+                        </td>
+                    </tr>`;
+            }
         });
+        withdrawTable.innerHTML = withdrawHTML || "<tr><td colspan='3' style='text-align:center; padding:20px; color:#666;'>No pending requests.</td></tr>";
+    });
+}
 
-        // ৩. উইথড্র লিস্ট লোড
-        db.ref('withdrawRequests').on('value', s => {
-            let pending = 0, paid = 0;
-            const list = document.getElementById('withdrawList');
-            list.innerHTML = "";
-            s.forEach(child => {
-                const r = child.val();
-                if(r.status === "Pending") pending++; else paid += parseInt(r.amount);
-                list.innerHTML += `<tr>
-                    <td>${r.name}</td><td>${r.method}</td><td>${r.account}</td><td>${r.amount}</td>
-                    <td><span class="badge">${r.status}</span></td>
-                    <td>${r.status === 'Pending' ? `<button class="btn-success" onclick="approveW('${child.key}')" style="padding:5px 10px; border-radius:5px; border:none; cursor:pointer;">Approve</button>` : '✅'}</td>
-                </tr>`;
-            });
-            document.getElementById('statPending').innerText = pending;
-            document.getElementById('statPaid').innerText = paid + " 🟡";
-        });
-    }
-    
-    // পেজ লোড হওয়ার সাথে সাথে ডাটা কল করা
-    loadAdminData();
+// --- ৪. অ্যাপ সেটিংস (Scroll Notice, Popup, Offers) ---
+function loadAppSettings() {
+    // স্ক্রল নোটিশ লোড
+    db.ref('appSettings/scrollNotice').on('value', s => {
+        if(document.getElementById('scrollInput')) document.getElementById('scrollInput').value = s.val() || "";
+    });
 
-    document.getElementById('noticeTarget').onchange = function(){
-        document.getElementById('specUidBox').style.display = this.value === 'specific' ? 'block' : 'none';
-    };
-
-    function pushOffer() {
-        const title = document.getElementById('offTitle').value;
-        const link = document.getElementById('offLink').value;
-        const reward = document.getElementById('offReward').value;
-        const icon = document.getElementById('offIcon').value;
-        if(!title || !link || !icon) return alert("All fields (including Image URL) are required!");
-        db.ref('cpaOffers').push({ title, link, reward, icon }).then(() => {
-            alert("Offer Added!");
-            document.getElementById('offTitle').value = "";
-            document.getElementById('offLink').value = "";
-            document.getElementById('offIcon').value = "";
-        });
-    }
-
-    function deleteOffer(key) {
-        if(confirm("Delete this offer?")) db.ref('cpaOffers/' + key).remove();
-    }
-
-    function updateScroll() {
-        const text = document.getElementById('scrollInput').value;
-        const target = document.getElementById('noticeTarget').value;
-        const path = target === 'global' ? 'appSettings/scrollNotice' : `users/${document.getElementById('targetUid').value}/personalNotice`;
-        db.ref(path).set(text).then(() => alert("Notice Updated!"));
-    }
-
-    function sendPopup() {
-        const text = document.getElementById('popupInput').value;
-        db.ref('appSettings/popupNotice').set({ text, show: true }).then(() => alert("Popup Sent!"));
-    }
-    function closePopup() { db.ref('appSettings/popupNotice/show').set(false).then(() => alert("Popup Stopped!")); }
-
-    function approveW(key) {
-        if(confirm("Mark as Paid?")) {
-            db.ref('withdrawRequests/' + key).update({ status: "Paid" }).then(() => alert("Approved!"));
+    // পপআপ নোটিশ লোড
+    db.ref('appSettings/popupNotice').on('value', s => {
+        const data = s.val();
+        if(data && document.getElementById('popupTextInput')) {
+            document.getElementById('popupTextInput').value = data.text || "";
+            document.getElementById('popupStatus').checked = data.show || false;
         }
+    });
+}
+
+// সেভ করার ফাংশনগুলো
+function saveScrollNotice() {
+    const text = document.getElementById('scrollInput').value;
+    db.ref('appSettings/scrollNotice').set(text).then(() => alert("Scroll Notice Updated! ✅"));
+}
+
+function savePopupNotice() {
+    const text = document.getElementById('popupTextInput').value;
+    const isShow = document.getElementById('popupStatus').checked;
+    db.ref('appSettings/popupNotice').update({ text: text, show: isShow }).then(() => alert("Popup Notice Updated! ✅"));
+}
+
+function updateCPAOffer(offerID) {
+    const url = document.getElementById('url_' + offerID).value;
+    const reward = document.getElementById('reward_' + offerID).value;
+    db.ref('appSettings/offers/' + offerID).update({ url: url, reward: parseInt(reward) })
+      .then(() => alert("Offer " + offerID + " Updated! ✅"));
+}
+
+// --- ৫. কোর একশন ফাংশনস ---
+function updateBalance(uid) {
+    const newBal = document.getElementById('bal_' + uid).value;
+    db.ref('users/' + uid).update({ balance: parseInt(newBal) }).then(() => alert("Balance Updated!"));
+}
+
+function toggleBlock(uid, currentStatus) {
+    db.ref('users/' + uid).update({ isBlocked: !currentStatus });
+}
+
+function deleteUser(uid) {
+    if(confirm("Are you sure?")) db.ref('users/' + uid).remove();
+}
+
+function approveWithdraw(rid) {
+    if(confirm("Payment Complete?")) {
+        db.ref('withdrawRequests/' + rid).update({ status: "Paid" });
     }
+}
+
+function rejectWithdraw(rid, uid, amount) {
+    if(confirm("Reject and Refund Coins?")) {
+        db.ref('users/' + uid + '/balance').transaction(curr => (curr || 0) + amount);
+        db.ref('withdrawRequests/' + rid).update({ status: "Rejected" });
+    }
+}
 </script>
 </body>
 </html>
