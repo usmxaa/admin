@@ -19,7 +19,7 @@
         @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
         .stat-card { background: var(--card-bg); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid #222; }
         .stat-card h3 { font-size: 10px; color: #888; text-transform: uppercase; margin: 0; }
-        .stat-card p { font-size: 20px; font-weight: 700; margin: 5px 0 0; color: var(--primary); }
+        .stat-card p { font-size: 18px; font-weight: 700; margin: 5px 0 0; color: var(--primary); }
         .grid-layout { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media (min-width: 992px) { .grid-layout { grid-template-columns: 1fr 1fr; } }
         .admin-box { background: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid #222; margin-bottom: 15px; }
@@ -34,9 +34,8 @@
         .table-wrap { width: 100%; overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid #222; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { text-align: left; font-size: 12px; color: #555; padding: 15px; border-bottom: 1px solid #333; }
-        td { padding: 15px; font-size: 13px; border-bottom: 1px solid #222; }
-        .badge { padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; background: rgba(255,123,0,0.2); color: var(--primary); }
-        .mini-img { width: 30px; height: 30px; border-radius: 5px; object-fit: cover; }
+        td { padding: 12px; font-size: 13px; border-bottom: 1px solid #222; }
+        .mini-img { width: 35px; height: 35px; border-radius: 8px; object-fit: cover; }
     </style>
 </head>
 <body>
@@ -50,55 +49,38 @@
     <div class="stats-grid">
         <div class="stat-card"><h3>Total Users</h3><p id="statUsers">0</p></div>
         <div class="stat-card"><h3>Pending Withdraw</h3><p id="statPending">0</p></div>
-        <div class="stat-card"><h3>Total Paid</h3><p id="statPaid">0</p></div>
-        <div class="stat-card"><h3>System Balance</h3><p id="statBalance">0</p></div>
+        <div class="stat-card"><h3>Total Paid</h3><p id="statPaid">0 🟡</p></div>
+        <div class="stat-card"><h3>System Balance</h3><p id="statBalance">0 🟡</p></div>
     </div>
 
     <div class="grid-layout">
         <div class="admin-box">
             <h2>📢 CPA Offer Controller</h2>
-            <div class="form-group"><label>Offer Title</label><input type="text" id="offTitle" placeholder="Ex: Win Nike Gift Card"></div>
-            <div class="form-group"><label>CPA Link</label><input type="text" id="offLink" placeholder="https://your-cpa-link.com"></div>
-            <div class="form-group"><label>Reward Coins</label><input type="number" id="offReward" placeholder="Ex: 500"></div>
-            <div class="form-group"><label>Offer Image URL (Direct Link)</label><input type="text" id="offIcon" placeholder="https://example.com/logo.png"></div>
+            <div class="form-group"><label>Offer Title</label><input type="text" id="offTitle"></div>
+            <div class="form-group"><label>CPA Link</label><input type="text" id="offLink"></div>
+            <div class="form-group"><label>Reward Coins</label><input type="number" id="offReward"></div>
+            <div class="form-group"><label>Image URL</label><input type="text" id="offIcon"></div>
             <button class="btn btn-primary" onclick="pushOffer()">ADD TO INBOX-TASK</button>
-            
-            <h3 style="font-size: 13px; margin-top: 25px; color: #888;">Active Offers List</h3>
             <div class="table-wrap">
-                <table style="min-width: 100%;">
-                    <thead><tr><th>Image</th><th>Title</th><th>Action</th></tr></thead>
-                    <tbody id="adminOfferList"></tbody>
-                </table>
+                <table><thead><tr><th>Icon</th><th>Title</th><th>Action</th></tr></thead><tbody id="adminOfferList"></tbody></table>
             </div>
         </div>
 
         <div class="admin-box">
             <h2>✉️ Notice Center</h2>
-            <div class="form-group">
-                <label>Target Audience</label>
-                <select id="noticeTarget">
-                    <option value="global">All Users (Global)</option>
-                    <option value="specific">Specific User (By UID)</option>
-                </select>
-            </div>
-            <div id="specUidBox" class="form-group" style="display:none;"><label>User UID</label><input type="text" id="targetUid" placeholder="Enter User UID"></div>
-            
-            <div class="form-group"><label>Scrolling News (Newsticker)</label><input type="text" id="scrollInput" placeholder="নিউজ বার নোটিশ..."></div>
+            <div class="form-group"><label>Scrolling News</label><input type="text" id="scrollInput"></div>
             <button class="btn btn-primary" onclick="updateScroll()">UPDATE SCROLL</button>
-
-            <div class="form-group" style="margin-top:15px;"><label>Popup/Alert Message</label><textarea id="popupInput" rows="2" placeholder="পপ-আপ মেসেজ..."></textarea></div>
-            <button class="btn btn-success" onclick="sendPopup()">SEND POPUP</button>
-            <button class="btn btn-danger" onclick="closePopup()">STOP/CLOSE POPUP</button>
+            <div class="form-group" style="margin-top:15px;"><label>Popup Message</label><textarea id="popupInput" rows="2"></textarea></div>
+            <button class="btn btn-success" onclick="sendPopup(true)">ENABLE POPUP</button>
+            <button class="btn btn-danger" onclick="sendPopup(false)">STOP POPUP</button>
         </div>
     </div>
 
     <div class="admin-box" style="margin-top: 20px;">
-        <h2>👥 Registered Users List</h2>
+        <h2>👥 Registered Users List (Full Control)</h2>
         <div class="table-wrap">
             <table>
-                <thead>
-                    <tr><th>Username</th><th>UID</th><th>Balance</th></tr>
-                </thead>
+                <thead><tr><th>User Info</th><th>Balance Edit</th><th>Action</th></tr></thead>
                 <tbody id="fullUserList"></tbody>
             </table>
         </div>
@@ -108,9 +90,7 @@
         <h2>💳 Withdrawal Management</h2>
         <div class="table-wrap">
             <table>
-                <thead>
-                    <tr><th>Name</th><th>Method</th><th>Account</th><th>Amount</th><th>Status</th><th>Action</th></tr>
-                </thead>
+                <thead><tr><th>Name</th><th>Details</th><th>Amount</th><th>Action</th></tr></thead>
                 <tbody id="withdrawList"></tbody>
             </table>
         </div>
@@ -118,12 +98,12 @@
 </div>
 
 
-    <script>
+
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-// Firebase Configuration
+<script>
 const firebaseConfig = {
     apiKey: "AIzaSyCqI9Te8ffBptsDS-oAIwPjpa5YSSpygYg",
     authDomain: "micro-job-center.firebaseapp.com",
@@ -137,141 +117,93 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// --- ১. পেজ লোড হলে সব ডাটা কানেক্ট করা ---
 window.onload = function() {
-    loadDashboardStats();
-    loadUsersList();
-    loadWithdrawRequests();
-    loadAppSettings(); // নোটিশ এবং অফার লোড
+    loadDashboardData();
 };
 
-// --- ২. ড্যাশবোর্ড স্ট্যাটাস এবং ইউজার লিস্ট কন্ট্রোল ---
-function loadUsersList() {
+function loadDashboardData() {
+    // ১. ইউজার কন্ট্রোল এবং ব্যালেন্স স্ট্যাটাস
     db.ref('users').on('value', (snapshot) => {
-        const userTable = document.getElementById('fullUserList');
-        let userHTML = "";
-        let totalCoins = 0;
-
+        const list = document.getElementById('fullUserList');
+        let html = ""; let totalSysBal = 0;
         snapshot.forEach(child => {
-            const u = child.val();
-            const uid = child.key;
-            totalCoins += (u.balance || 0);
+            const u = child.val(); const uid = child.key;
+            totalSysBal += (u.balance || 0);
             const isBlocked = u.isBlocked || false;
-
-            userHTML += `
-                <tr style="border-bottom: 1px solid #222;">
-                    <td style="padding:12px;">
-                        <b style="color:#fff;">${u.username || 'No Name'}</b><br>
-                        <small style="color:#666;">${u.email || 'No Email'}</small>
-                    </td>
-                    <td>
-                        <input type="number" id="bal_${uid}" value="${u.balance || 0}" 
-                               style="width:70px; background:#000; color:#FF7B00; border:1px solid #333; padding:5px; border-radius:5px;">
-                        <button onclick="updateBalance('${uid}')" style="background:#FF7B00; border:none; padding:5px; border-radius:5px; cursor:pointer; font-weight:bold; font-size:10px;">SAVE</button>
-                    </td>
-                    <td>
-                        <button onclick="toggleBlock('${uid}', ${isBlocked})" 
-                                style="background:${isBlocked ? '#28a745' : '#dc3545'}; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer;">
-                                ${isBlocked ? 'Unblock' : 'Block'}</button>
-                        <button onclick="deleteUser('${uid}')" 
-                                style="background:#444; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; margin-left:5px;">DEL</button>
-                    </td>
-                </tr>`;
+            html += `<tr>
+                <td><b>${u.username || 'User'}</b><br><small style="color:#666;">${uid}</small></td>
+                <td>
+                    <input type="number" id="bal_${uid}" value="${u.balance || 0}" style="width:70px; background:#000; color:orange; border:1px solid #333; padding:5px; border-radius:5px;">
+                    <button onclick="updateBalance('${uid}')" style="background:orange; border:none; padding:5px; border-radius:5px; cursor:pointer; font-weight:bold;">SAVE</button>
+                </td>
+                <td>
+                    <button onclick="toggleBlock('${uid}', ${isBlocked})" style="background:${isBlocked ? '#00E676' : '#FF5252'}; border:none; padding:8px; border-radius:5px; cursor:pointer; font-weight:bold;">${isBlocked ? 'UNBLOCK' : 'BLOCK'}</button>
+                    <button onclick="deleteUser('${uid}')" style="background:#333; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer; margin-left:5px;">DEL</button>
+                </td>
+            </tr>`;
         });
-        userTable.innerHTML = userHTML;
+        list.innerHTML = html;
         document.getElementById('statUsers').innerText = snapshot.numChildren();
-        document.getElementById('statBalance').innerText = totalCoins + " 🟡";
+        document.getElementById('statBalance').innerText = totalSysBal + " 🟡";
     });
-}
 
-// --- ৩. উইথড্রয়াল ম্যানেজমেন্ট (Approve/Reject) ---
-function loadWithdrawRequests() {
+    // ২. উইথড্রয়াল কন্ট্রোল এবং পেইড স্ট্যাটাস
     db.ref('withdrawRequests').on('value', (snapshot) => {
-        const withdrawTable = document.getElementById('withdrawTable');
-        let withdrawHTML = "";
-
+        const list = document.getElementById('withdrawList');
+        let html = ""; let pending = 0; let paid = 0;
         snapshot.forEach(child => {
             const r = child.val();
-            const rid = child.key;
-
-            if (r.status === "Pending") {
-                withdrawHTML += `
-                    <tr style="background: rgba(255,123,0,0.05); border-bottom: 1px solid #333;">
-                        <td style="padding:12px;">${r.name}<br><small>${r.method}</small></td>
-                        <td>${r.amount} 🟡<br><small>${r.account}</small></td>
-                        <td>
-                            <button onclick="approveWithdraw('${rid}')" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer;">PAID</button>
-                            <button onclick="rejectWithdraw('${rid}', '${r.uid}', ${r.amount})" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; margin-left:3px;">REJECT</button>
-                        </td>
-                    </tr>`;
+            if(r.status === "Pending") {
+                pending++;
+                html += `<tr>
+                    <td>${r.name}</td><td>${r.method}<br><small>${r.account}</small></td><td>${r.amount} 🟡</td>
+                    <td><button onclick="approveWithdraw('${child.key}')" class="btn-success" style="padding:5px 10px;">PAID</button>
+                    <button onclick="rejectWithdraw('${child.key}','${r.uid}',${r.amount})" class="btn-danger" style="padding:5px 10px;">X</button></td></tr>`;
+            } else if(r.status === "Paid") {
+                paid += (r.amount || 0);
             }
         });
-        withdrawTable.innerHTML = withdrawHTML || "<tr><td colspan='3' style='text-align:center; padding:20px; color:#666;'>No pending requests.</td></tr>";
-    });
-}
-
-// --- ৪. অ্যাপ সেটিংস (Scroll Notice, Popup, Offers) ---
-function loadAppSettings() {
-    // স্ক্রল নোটিশ লোড
-    db.ref('appSettings/scrollNotice').on('value', s => {
-        if(document.getElementById('scrollInput')) document.getElementById('scrollInput').value = s.val() || "";
+        list.innerHTML = html || "<tr><td colspan='4' style='text-align:center;'>No Requests</td></tr>";
+        document.getElementById('statPending').innerText = pending;
+        document.getElementById('statPaid').innerText = paid + " 🟡";
     });
 
-    // পপআপ নোটিশ লোড
-    db.ref('appSettings/popupNotice').on('value', s => {
-        const data = s.val();
-        if(data && document.getElementById('popupTextInput')) {
-            document.getElementById('popupTextInput').value = data.text || "";
-            document.getElementById('popupStatus').checked = data.show || false;
-        }
+    // ৩. অফার লিস্ট লোড
+    db.ref('appSettings/offers').on('value', (s) => {
+        let html = "";
+        s.forEach(c => {
+            html += `<tr><td><img src="${c.val().icon}" class="mini-img"></td><td>${c.val().title}</td>
+            <td><button onclick="deleteOffer('${c.key}')" style="color:red; border:none; background:none; cursor:pointer;">Del</button></td></tr>`;
+        });
+        document.getElementById('adminOfferList').innerHTML = html;
     });
+
+    // ৪. নোটিশ লোড
+    db.ref('appSettings/scrollNotice').once('value', s => document.getElementById('scrollInput').value = s.val() || "");
+    db.ref('appSettings/popupNotice').once('value', s => document.getElementById('popupInput').value = s.val()?.text || "");
 }
 
-// সেভ করার ফাংশনগুলো
-function saveScrollNotice() {
-    const text = document.getElementById('scrollInput').value;
-    db.ref('appSettings/scrollNotice').set(text).then(() => alert("Scroll Notice Updated! ✅"));
-}
-
-function savePopupNotice() {
-    const text = document.getElementById('popupTextInput').value;
-    const isShow = document.getElementById('popupStatus').checked;
-    db.ref('appSettings/popupNotice').update({ text: text, show: isShow }).then(() => alert("Popup Notice Updated! ✅"));
-}
-
-function updateCPAOffer(offerID) {
-    const url = document.getElementById('url_' + offerID).value;
-    const reward = document.getElementById('reward_' + offerID).value;
-    db.ref('appSettings/offers/' + offerID).update({ url: url, reward: parseInt(reward) })
-      .then(() => alert("Offer " + offerID + " Updated! ✅"));
-}
-
-// --- ৫. কোর একশন ফাংশনস ---
+// ফাংশনসমূহ
 function updateBalance(uid) {
-    const newBal = document.getElementById('bal_' + uid).value;
-    db.ref('users/' + uid).update({ balance: parseInt(newBal) }).then(() => alert("Balance Updated!"));
+    const b = document.getElementById('bal_' + uid).value;
+    db.ref('users/' + uid).update({ balance: parseInt(b) }).then(() => alert("Balance Updated!"));
 }
-
-function toggleBlock(uid, currentStatus) {
-    db.ref('users/' + uid).update({ isBlocked: !currentStatus });
+function toggleBlock(uid, s) { db.ref('users/' + uid).update({ isBlocked: !s }); }
+function deleteUser(uid) { if(confirm("Delete User?")) db.ref('users/' + uid).remove(); }
+function approveWithdraw(rid) { db.ref('withdrawRequests/' + rid).update({ status: "Paid" }); }
+function rejectWithdraw(rid, uid, amt) {
+    db.ref('users/' + uid + '/balance').transaction(c => (c || 0) + amt);
+    db.ref('withdrawRequests/' + rid).update({ status: "Rejected" });
 }
-
-function deleteUser(uid) {
-    if(confirm("Are you sure?")) db.ref('users/' + uid).remove();
+function pushOffer() {
+    const title = document.getElementById('offTitle').value;
+    const link = document.getElementById('offLink').value;
+    const reward = document.getElementById('offReward').value;
+    const icon = document.getElementById('offIcon').value;
+    db.ref('appSettings/offers').push({ title, link, reward: parseInt(reward), icon });
 }
-
-function approveWithdraw(rid) {
-    if(confirm("Payment Complete?")) {
-        db.ref('withdrawRequests/' + rid).update({ status: "Paid" });
-    }
-}
-
-function rejectWithdraw(rid, uid, amount) {
-    if(confirm("Reject and Refund Coins?")) {
-        db.ref('users/' + uid + '/balance').transaction(curr => (curr || 0) + amount);
-        db.ref('withdrawRequests/' + rid).update({ status: "Rejected" });
-    }
-}
-</script>
-</body>
-</html>
+function deleteOffer(id) { db.ref('appSettings/offers/' + id).remove(); }
+function updateScroll() { db.ref('appSettings/scrollNotice').set(document.getElementById('scrollInput').value); }
+function sendPopup(show) { db.ref('appSettings/popupNotice').set({ text: document.getElementById('popupInput').value, show: show }); }
+        </script>
+    
